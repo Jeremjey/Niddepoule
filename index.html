@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Nids de poule">
+<title>Nids de Poule</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{--o:#D85A30;--od:#A8421E;--ol:#FAECE7;--ob:#F0997B;--g:#1D9E75;--gd:#0F6E56;--b:#185FA5;--r:#E24B4A;--bg:#F2F2F0;--bc:#FFF;--bi:#F7F7F5;--bd:#E2E2DE;--bl2:#EBEBEA;--t:#1A1A18;--t2:#5C5C58;--t3:#9C9C96;--sh:0 1px 4px rgba(0,0,0,.08),0 4px 14px rgba(0,0,0,.05)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;background:var(--bg);color:var(--t);display:flex;flex-direction:column;max-width:600px;margin:0 auto}
+/* header */
+.hdr{background:var(--bc);border-bottom:1px solid var(--bl2);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0}
+.hico{width:36px;height:36px;background:var(--o);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;flex-shrink:0}
+/* tabs */
+.tabs{display:flex;background:var(--bc);border-bottom:1px solid var(--bl2);flex-shrink:0}
+.tab{flex:1;padding:11px 8px;font-size:13px;font-weight:500;background:none;border:none;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab.active{color:var(--o);border-bottom-color:var(--o)}
+/* scroll */
+.tc{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sec{padding:14px 14px 90px}
+/* card */
+.card{background:var(--bc);border-radius:12px;border:1px solid var(--bl2);margin-bottom:12px;padding:14px;box-shadow:var(--sh)}
+.ct{font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.sn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--o);color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+/* inputs */
+label{font-size:12px;color:var(--t2);display:block;margin-bottom:4px;margin-top:12px}
+label:first-child{margin-top:0}
+input[type=text],input[type=number],select,textarea{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;font-size:15px;background:var(--bi);color:var(--t);font-family:inherit;-webkit-appearance:none;outline:none;transition:border-color .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--o)}
+textarea{resize:vertical;min-height:60px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.r3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+/* badges */
+.bdg{display:inline-block;font-size:11px;padding:2px 7px;border-radius:5px;font-weight:600}
+.bf{background:#EAF3DE;color:#3B6D11}.bm{background:#FEF3E2;color:#8B4800}.bg2{background:#FCEBEB;color:#A32D2D}.be{background:#E6F1FB;color:#0C447C}
+/* buttons */
+.btn{padding:10px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid var(--bd);background:var(--bi);color:var(--t);display:inline-flex;align-items:center;gap:7px;user-select:none;transition:transform .1s}
+.btn:active{transform:scale(.97)}
+.btp{background:var(--o);color:#fff;border-color:var(--o)}
+.bts{background:var(--g);color:#fff;border-color:var(--g)}
+.btf{width:100%;justify-content:center;margin-top:8px}
+.btsm{padding:7px 11px;font-size:13px}
+.bgrp{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+
+/* === PHOTO BUTTON PRINCIPAL === */
+.photo-main-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  padding:28px 16px;
+  background:linear-gradient(135deg,var(--ol),#FDE8DC);
+  border:2px dashed var(--ob);border-radius:14px;
+  cursor:pointer;user-select:none;
+  transition:all .15s;text-align:center;
+}
+.photo-main-btn:active{background:#F5D0C0;border-color:var(--od);}
+.photo-main-btn .ico{font-size:52px;color:var(--o);line-height:1}
+.photo-main-btn .title{font-size:17px;font-weight:700;color:var(--od)}
+.photo-main-btn .sub{font-size:12px;color:var(--t2);line-height:1.4}
+.photo-sub-row{display:flex;gap:8px;margin-top:8px}
+.photo-sub-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:10px 8px;border:1.5px dashed var(--bd);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:var(--t2);background:var(--bi);user-select:none}
+.photo-sub-btn:active{border-color:var(--o);color:var(--o)}
+.photo-sub-btn i{font-size:20px}
+
+/* === GPS STATUS === */
+.gps-status{border-radius:10px;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.gps-status.ok{background:#E8F7F1;border:1px solid #A8DCC8;color:#0A4D30}
+.gps-status.warn{background:#FFF8EC;border:1px solid #FFD080;color:#6B4A00}
+.gps-status.err{background:#FEECEC;border:1px solid #F5AAAA;color:#6B1010}
+.gps-status.loading{background:#F0F0EE;border:1px solid var(--bd);color:var(--t2)}
+.gps-status i{font-size:22px;flex-shrink:0}
+.gps-info{flex:1;min-width:0}
+.gps-info .gtitle{font-weight:600}
+.gps-info .gval{font-size:11px;margin-top:2px;opacity:.8;word-break:break-all}
+.gps-spin{animation:sp 1s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* thumbs */
+.ptbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pdel{position:relative}
+.pthb{width:72px;height:72px;border-radius:8px;object-fit:cover;border:1px solid var(--bl2);display:block;cursor:pointer}
+.delbtn{position:absolute;top:-5px;right:-5px;width:18px;height:18px;border-radius:50%;background:var(--r);border:none;color:#fff;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+/* rue bar */
+.ruebar{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--ol);border-radius:8px;border:1px solid var(--ob);margin-bottom:12px;font-size:13px;color:var(--od)}
+.ruebar strong{flex:1;font-weight:600}
+.ruebar button{background:none;border:none;color:var(--od);cursor:pointer;font-size:12px;padding:3px 7px;border-radius:5px}
+/* surface */
+.scalcbox{display:flex;align-items:center;gap:10px;padding:9px 13px;margin-top:10px;background:var(--ol);border-radius:8px;border:1px solid var(--ob)}
+.scalcbox .v{font-size:20px;font-weight:700;color:var(--o)}
+.scalcbox .l{font-size:12px;color:var(--od)}
+/* stats */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.sbox{background:var(--bc);border-radius:12px;padding:12px;border:1px solid var(--bl2);box-shadow:var(--sh);text-align:center}
+.sbox .v{font-size:24px;font-weight:700;color:var(--o)}
+.sbox .l{font-size:11px;color:var(--t3);margin-top:2px;font-weight:500}
+/* recap */
+.rgrp{margin-bottom:10px}
+.rhdr{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bc);border-radius:12px;border:1px solid var(--bl2);font-size:14px;font-weight:600;box-shadow:var(--sh)}
+.rn{display:flex;align-items:center;gap:7px}
+.rto{color:var(--o)}
+.ritems{border-left:2px solid var(--bd);margin-left:18px;padding-left:12px;margin-top:6px}
+.ritem{padding:10px 4px;border-bottom:1px solid var(--bl2);font-size:13px}
+.ritem:last-child{border-bottom:none}
+.rtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.rsurf{font-weight:700;font-size:14px}
+.rmeta{font-size:12px;color:var(--t3);margin-top:3px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+.robs{font-size:12px;color:var(--t2);margin-top:4px;font-style:italic}
+.rphotos{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.rph{width:72px;height:56px;border-radius:6px;object-fit:cover;border:1px solid var(--bl2);cursor:pointer}
+/* export */
+.ibox{background:var(--bi);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--t2);border:1px solid var(--bd);margin:10px 0 12px;line-height:1.6}
+.ibox code{font-family:'SF Mono','Consolas',monospace;font-size:12px;color:var(--t);background:var(--bc);padding:1px 5px;border-radius:4px;border:1px solid var(--bl2)}
+/* save bar */
+.savebar{position:fixed;bottom:0;left:0;right:0;max-width:600px;margin:0 auto;padding:12px 14px;background:rgba(255,255,255,.96);backdrop-filter:blur(10px);border-top:1px solid var(--bl2);z-index:100}
+/* modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:500;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal img{max-width:95vw;max-height:90vh;border-radius:8px;object-fit:contain}
+.mcls{position:fixed;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:40px;height:40px;font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff}
+.empty{text-align:center;color:var(--t3);padding:3rem 1rem}
+.empty i{font-size:40px;display:block;margin-bottom:10px}
+/* toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A1A18;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;z-index:600;animation:fu .25s ease;pointer-events:none;white-space:nowrap;font-weight:500;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+@keyframes fu{from{opacity:0;transform:translateX(-50%) translateY(8px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hico"><i class="ti ti-road"></i></div>
+  <div>
+    <div style="font-size:16px;font-weight:600">Campagne nids de poule</div>
+    <div id="hdr-sub" style="font-size:12px;color:var(--t3)">0 releve &middot; 0 m&sup2; total</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('saisie')"><i class="ti ti-plus-circle"></i> Saisie</button>
+  <button class="tab" onclick="showTab('recap')"><i class="ti ti-table"></i> Recap</button>
+  <button class="tab" onclick="showTab('export')"><i class="ti ti-download"></i> Export</button>
+</div>
+
+<div class="tc">
+
+  <!-- SAISIE -->
+  <div id="tab-saisie" class="sec">
+
+    <div id="ruebar" class="ruebar" style="display:none">
+      <i class="ti ti-map-pin"></i>
+      <strong id="ruebar-lbl"></strong>
+      <button onclick="clearRue()"><i class="ti ti-x"></i> Changer</button>
+    </div>
+
+    <!-- ETAPE 1 : PHOTO + GPS capture simultanee -->
+    <div class="card">
+      <div class="ct"><span class="sn">1</span><i class="ti ti-camera" style="color:var(--o)"></i> Photo &amp; GPS</div>
+
+      <!-- Bouton principal : capture GPS + ouvre camera -->
+      <div class="photo-main-btn" id="photo-main-btn" onclick="captureGPSAndPhoto()">
+        <div class="ico"><i class="ti ti-camera-plus"></i></div>
+        <div class="title">Photographier le nid de poule</div>
+        <div class="sub">Le GPS du telephone est capture automatiquement<br>au moment de la prise de vue</div>
+      </div>
+
+      <!-- Boutons secondaires -->
+      <div class="photo-sub-row">
+        <div class="photo-sub-btn" onclick="captureGPSAndPhoto()">
+          <i class="ti ti-camera"></i>Camera
+        </div>
+        <div class="photo-sub-btn" onclick="importFromGallery()">
+          <i class="ti ti-photo"></i>Galerie
+        </div>
+        <div class="photo-sub-btn" onclick="tryGPSOnly()">
+          <i class="ti ti-gps"></i>GPS seul
+        </div>
+      </div>
+
+      <input type="file" id="fi-cam" accept="image/*" capture="environment" style="display:none" onchange="onPhotoSelected(this)">
+      <input type="file" id="fi-gal" accept="image/*" multiple style="display:none" onchange="onGallerySelected(this)">
+
+      <div class="ptbs" id="pthumbs"></div>
+    </div>
+
+    <!-- ETAPE 2 : GPS STATUS -->
+    <div class="card">
+      <div class="ct"><span class="sn">2</span><i class="ti ti-map-pin" style="color:var(--o)"></i> Position GPS</div>
+
+      <div class="gps-status warn" id="gps-status">
+        <i class="ti ti-map-pin-question"></i>
+        <div class="gps-info">
+          <div class="gtitle">En attente</div>
+          <div class="gval" id="gps-val">Prendre une photo pour capturer le GPS automatiquement</div>
+        </div>
+      </div>
+
+      <!-- Saisie manuelle toujours accessible -->
+      <div style="margin-top:10px">
+        <div style="font-size:12px;color:var(--t3);margin-bottom:6px">Correction ou saisie manuelle :</div>
+        <div class="r3">
+          <div><label style="margin-top:0">Latitude</label><input type="text" id="g-lat" placeholder="48.8123" inputmode="decimal" oninput="onManualGPS()"></div>
+          <div><label style="margin-top:0">Longitude</label><input type="text" id="g-lng" placeholder="2.3634" inputmode="decimal" oninput="onManualGPS()"></div>
+          <div><label style="margin-top:0">Precision</label><input type="number" id="g-acc" placeholder="m" inputmode="numeric" oninput="onManualGPS()"></div>
+        </div>
+        <button class="btn btsm" style="margin-top:8px;color:var(--b);border-color:var(--b);font-size:12px" onclick="openGMaps()">
+          <i class="ti ti-map-2"></i> Ouvrir Google Maps pour copier les coords
+        </button>
+      </div>
+    </div>
+
+    <!-- ETAPE 3 : RUE -->
+    <div class="card">
+      <div class="ct"><span class="sn">3</span><i class="ti ti-road" style="color:var(--o)"></i> Rue &amp; details</div>
+      <label style="margin-top:0">Rue / voie</label>
+      <input type="text" id="rue" placeholder="Av. Jean Jaures" list="rue-dl" oninput="onRueTyping()">
+      <datalist id="rue-dl"></datalist>
+      <div class="r2" style="margin-top:12px">
+        <div><label style="margin-top:0">N&deg; / repere</label><input type="text" id="repere" placeholder="42, face mairie"></div>
+        <div><label style="margin-top:0">Gravite</label>
+          <select id="gravite">
+            <option value="faible">Faible</option>
+            <option value="moyen" selected>Moyen</option>
+            <option value="grave">Grave</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- ETAPE 4 : SURFACE -->
+    <div class="card">
+      <div class="ct"><span class="sn">4</span><i class="ti ti-ruler-2" style="color:var(--o)"></i> Surface a reprendre</div>
+      <div class="r2">
+        <div><label style="margin-top:0">Longueur (m)</label><input type="number" id="lon" placeholder="1.5" step="0.1" min="0" inputmode="decimal"></div>
+        <div><label style="margin-top:0">Largeur (m)</label><input type="number" id="lar" placeholder="0.8" step="0.1" min="0" inputmode="decimal"></div>
+      </div>
+      <div class="scalcbox"><div><div class="v" id="scalc">--</div><div class="l">m&sup2; calcule</div></div></div>
+      <label>Surface manuelle m&sup2; <span style="color:var(--t3);font-weight:400">(forme irreguliere)</span></label>
+      <input type="number" id="sman" placeholder="1.2" step="0.1" min="0" inputmode="decimal">
+    </div>
+
+    <!-- ETAPE 5 : OBS -->
+    <div class="card">
+      <div class="ct"><span class="sn">5</span><i class="ti ti-note" style="color:var(--o)"></i> Observations <span style="font-size:11px;font-weight:400;color:var(--t3)">(optionnel)</span></div>
+      <textarea id="obs" placeholder="Degradation, fissures, eau stagnante, zone PL..." style="margin-top:0"></textarea>
+    </div>
+
+    <div style="height:80px"></div>
+  </div>
+
+  <!-- RECAP -->
+  <div id="tab-recap" class="sec" style="display:none">
+    <div class="sgrid">
+      <div class="sbox"><div class="v" id="s-nb">0</div><div class="l">Releves</div></div>
+      <div class="sbox"><div class="v" id="s-surf">0</div><div class="l">m&sup2; total</div></div>
+      <div class="sbox"><div class="v" id="s-rues">0</div><div class="l">Rues</div></div>
+    </div>
+    <div id="recap-body"></div>
+  </div>
+
+  <!-- EXPORT -->
+  <div id="tab-export" class="sec" style="display:none">
+    <div class="card">
+      <div class="ct"><i class="ti ti-file-zip" style="color:var(--g)"></i> Export ZIP (CSV + photos)</div>
+      <div class="ibox">
+        <code>nids_de_poule.csv</code> tableau Excel avec noms fichiers photos<br>
+        <code>photos/</code> images nommees <code>RUE_repere_01.jpg</code>
+      </div>
+      <button class="btn bts btf" id="btn-zip" onclick="exportZIP()"><i class="ti ti-download"></i> Telecharger ZIP</button>
+    </div>
+    <div class="card">
+      <div class="ct"><i class="ti ti-file-spreadsheet" style="color:var(--b)"></i> Export CSV seul</div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Tableau leger, sans images.</p>
+      <button class="btn btf" style="color:var(--b);border-color:var(--b)" onclick="exportCSV()"><i class="ti ti-download"></i> Telecharger CSV</button>
+    </div>
+    <div class="card">
+      <div class="ct"><i class="ti ti-world" style="color:var(--b)"></i> Export KML (Google Earth)</div>
+      <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Points colores par gravite. Google Earth, My Maps, QGIS.</p>
+      <button class="btn btf" style="color:var(--b);border-color:var(--b)" onclick="exportKML()"><i class="ti ti-download"></i> Telecharger KML</button>
+    </div>
+    <div class="card">
+      <div class="ct"><i class="ti ti-database" style="color:#534AB7"></i> Sauvegarde / restauration</div>
+      <p style="font-size:13px;color:var(--t2)">JSON complet avec photos. Reprendre depuis n'importe quel appareil.</p>
+      <div class="bgrp">
+        <button class="btn" onclick="saveJSON()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+        <button class="btn" onclick="document.getElementById('li').click()"><i class="ti ti-upload"></i> Charger</button>
+      </div>
+      <input type="file" id="li" accept=".json" style="display:none" onchange="loadJSON(this)">
+    </div>
+    <div class="card" style="border-color:#FAD4D4">
+      <div class="ct"><i class="ti ti-trash" style="color:var(--r)"></i> <span style="color:var(--r)">Reinitialiser</span></div>
+      <p style="font-size:13px;color:var(--t2)">Efface tous les releves.</p>
+      <button class="btn btf" style="color:var(--r);border-color:#FAD4D4;margin-top:8px" onclick="clearAll()"><i class="ti ti-trash"></i> Tout effacer</button>
+    </div>
+    <div style="height:20px"></div>
+  </div>
+
+</div>
+
+<div class="savebar" id="savebar">
+  <button class="btn btp btf" onclick="addReleve()" style="font-size:15px;padding:13px">
+    <i class="ti ti-check"></i> Enregistrer le releve
+  </button>
+</div>
+
+<div class="modal" id="modal" onclick="closeModal()">
+  <button class="mcls" onclick="closeModal()">&#x2715;</button>
+  <img id="modal-img" src="" alt="">
+</div>
+
+<script>
+/* === STATE === */
+var releves=[],gps=null,pending=[],rueActive=null;
+var gpsWatcher=null; // watcher continu pour avoir coords fraiches
+try{var _s=localStorage.getItem('ndp12');if(_s)releves=JSON.parse(_s);}catch(e){}
+function persist(){try{localStorage.setItem('ndp12',JSON.stringify(releves));}catch(e){}}
+
+/* === TABS === */
+function showTab(t){
+  ['saisie','recap','export'].forEach(function(x,i){
+    document.getElementById('tab-'+x).style.display=x===t?'':'none';
+    document.querySelectorAll('.tab')[i].classList.toggle('active',x===t);
+  });
+  document.getElementById('savebar').style.display=t==='saisie'?'':'none';
+  if(t==='recap')renderRecap();
+  document.querySelector('.tc').scrollTo(0,0);
+}
+
+/* === RUE === */
+function onRueTyping(){rueActive=null;document.getElementById('ruebar').style.display='none';}
+function setRue(rue){rueActive=rue;document.getElementById('ruebar-lbl').textContent=rue;document.getElementById('ruebar').style.display='flex';document.getElementById('rue').value=rue;}
+function clearRue(){rueActive=null;document.getElementById('ruebar').style.display='none';document.getElementById('rue').value='';document.getElementById('rue').focus();}
+
+/* === GPS UI === */
+function setGPSUI(state,title,val){
+  var el=document.getElementById('gps-status');
+  el.className='gps-status '+state;
+  var icons={ok:'ti-map-pin-check',warn:'ti-map-pin-question',err:'ti-map-pin-off',loading:'ti-loader-2'};
+  el.querySelector('i').className='ti '+icons[state]+(state==='loading'?' gps-spin':'');
+  el.querySelector('.gtitle').textContent=title;
+  document.getElementById('gps-val').textContent=val||'';
+}
+
+function applyGPS(g,src){
+  gps=g;
+  if(!g){setGPSUI('warn','En attente','Prendre une photo ou utiliser GPS seul');return;}
+  var labels={exif:'Extrait de la photo (EXIF)',auto:'GPS telephone',watch:'GPS telephone (continu)',manuel:'Saisi manuellement'};
+  setGPSUI('ok',labels[src]||src, g.lat+', '+g.lng+(g.acc?' \u00b1'+g.acc+'m':''));
+  document.getElementById('g-lat').value=g.lat;
+  document.getElementById('g-lng').value=g.lng;
+  if(g.acc)document.getElementById('g-acc').value=g.acc;
+}
+
+/* === GPS WATCHER (continu en arriere-plan) === */
+function startGPSWatch(){
+  if(!navigator.geolocation||gpsWatcher!==null)return;
+  gpsWatcher=navigator.geolocation.watchPosition(
+    function(p){
+      // On stocke silencieusement la derniere position connue
+      window._lastKnownGPS={lat:p.coords.latitude.toFixed(6),lng:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy),src:'watch'};
+    },
+    function(){},
+    {enableHighAccuracy:true,maximumAge:5000}
+  );
+}
+
+/* === CAPTURER GPS + OUVRIR CAMERA === */
+function captureGPSAndPhoto(){
+  // 1. Capturer GPS immediatement depuis la derniere position connue ou faire une requete
+  setGPSUI('loading','Acquisition GPS...','');
+  var gotGPS=false;
+
+  // Essayer d'abord la position en cache (watchPosition)
+  if(window._lastKnownGPS){
+    var g=window._lastKnownGPS;
+    applyGPS({lat:g.lat,lng:g.lng,acc:g.acc,src:'watch'},'watch');
+    gotGPS=true;
+  }
+
+  // Lancer aussi une requete precise en parallele
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(p){
+        applyGPS({lat:p.coords.latitude.toFixed(6),lng:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy),src:'auto'},'auto');
+      },
+      function(e){
+        if(!gotGPS){
+          var m={1:'Autoriser la localisation dans les reglages',2:'GPS indisponible',3:'Saisir manuellement'};
+          setGPSUI('err','GPS non obtenu',m[e.code]||'Saisir manuellement');
+        }
+      },
+      {enableHighAccuracy:true,timeout:8000,maximumAge:10000}
+    );
+  }else if(!gotGPS){
+    setGPSUI('err','GPS non disponible','Saisir manuellement ci-dessous');
+  }
+
+  // 2. Ouvrir la camera (independamment du GPS)
+  document.getElementById('fi-cam').click();
+}
+
+function importFromGallery(){
+  // Pour galerie: pas de GPS auto (photos anciennes), laisser le champ vide
+  document.getElementById('fi-gal').click();
+}
+
+function tryGPSOnly(){
+  if(!navigator.geolocation){setGPSUI('err','GPS non disponible','Saisir manuellement');return;}
+  setGPSUI('loading','Acquisition GPS...','');
+  navigator.geolocation.getCurrentPosition(
+    function(p){applyGPS({lat:p.coords.latitude.toFixed(6),lng:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy),src:'auto'},'auto');toast('GPS OK');},
+    function(e){var m={1:'Permission refusee - autoriser dans les reglages',2:'GPS indisponible',3:'Delai depasse'};setGPSUI('err','Erreur GPS',m[e.code]||'');},
+    {enableHighAccuracy:true,timeout:12000,maximumAge:0}
+  );
+}
+
+function onManualGPS(){
+  var lat=parseFloat(document.getElementById('g-lat').value.replace(',','.')),
+      lng=parseFloat(document.getElementById('g-lng').value.replace(',','.')),
+      acc=document.getElementById('g-acc').value;
+  if(!isNaN(lat)&&!isNaN(lng)&&Math.abs(lat)<=90&&Math.abs(lng)<=180){
+    applyGPS({lat:lat.toFixed(6),lng:lng.toFixed(6),acc:acc?parseInt(acc):null,src:'manuel'},'manuel');
+  }else if(document.getElementById('g-lat').value||document.getElementById('g-lng').value){
+    setGPSUI('err','Coordonnees invalides','Verifier la saisie');gps=null;
+  }
+}
+
+function openGMaps(){
+  window.open(gps?'https://maps.google.com/?q='+gps.lat+','+gps.lng:'https://maps.google.com','_blank');
+  toast('Copier les coords depuis Maps puis coller ci-dessous');
+}
+
+/* === PHOTOS === */
+function onPhotoSelected(inp){
+  var files=Array.from(inp.files);
+  if(!files.length)return;
+  files.forEach(function(f){
+    var dr=new FileReader();
+    dr.onload=function(e){pending.push(e.target.result);renderThumbs();};
+    dr.readAsDataURL(f);
+  });
+  inp.value='';
+  // Si GPS pas encore ok, retenter silencieusement
+  if(!gps&&navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      function(p){applyGPS({lat:p.coords.latitude.toFixed(6),lng:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy),src:'auto'},'auto');},
+      function(){},
+      {enableHighAccuracy:true,timeout:8000,maximumAge:15000}
+    );
+  }
+}
+
+function onGallerySelected(inp){
+  var files=Array.from(inp.files);
+  if(!files.length)return;
+  // Pour les photos de galerie, tenter EXIF quand meme
+  files.forEach(function(f){
+    var dr=new FileReader();
+    dr.onload=function(e){
+      pending.push(e.target.result);
+      // Tenter EXIF
+      var abr=new FileReader();
+      abr.onload=function(ev){
+        var exif=readExifGPS(ev.target.result);
+        if(exif&&!gps){applyGPS({lat:exif.lat,lng:exif.lng,acc:null,src:'exif'},'exif');toast('GPS extrait de la photo');}
+        renderThumbs();
+      };
+      abr.onerror=function(){renderThumbs();};
+      abr.readAsArrayBuffer(f);
+    };
+    dr.readAsDataURL(f);
+  });
+  inp.value='';
+}
+
+/* === EXIF (tente sur galerie) === */
+function readExifGPS(buf){
+  try{
+    var view=new DataView(buf),len=view.byteLength;
+    if(len<4||view.getUint16(0,false)!==0xFFD8)return null;
+    var off=2;
+    while(off<len-4){
+      var mk=view.getUint16(off,false);off+=2;
+      if(mk===0xFFE1){
+        var sl=view.getUint16(off,false);
+        if(off+10<len&&view.getUint8(off+2)===0x45&&view.getUint8(off+3)===0x78&&view.getUint8(off+4)===0x69&&view.getUint8(off+5)===0x66&&view.getUint8(off+6)===0x00){
+          var tiff=off+8;if(tiff+8>len){off+=sl;continue;}
+          var le=view.getUint16(tiff,false)===0x4949;
+          if(view.getUint16(tiff+2,le)!==42){off+=sl;continue;}
+          var ifd0=tiff+view.getUint32(tiff+4,le);if(ifd0+2>len){off+=sl;continue;}
+          var cnt=view.getUint16(ifd0,le),gpsoff=null;
+          for(var i=0;i<cnt&&ifd0+2+i*12+12<=len;i++){var ep=ifd0+2+i*12;if(view.getUint16(ep,le)===0x8825){gpsoff=tiff+view.getUint32(ep+8,le);break;}}
+          if(!gpsoff||gpsoff+2>len){off+=sl;continue;}
+          var gc=view.getUint16(gpsoff,le),gt={};
+          for(var i=0;i<gc&&gpsoff+2+i*12+12<=len;i++){
+            var gp=gpsoff+2+i*12,tag=view.getUint16(gp,le),typ=view.getUint16(gp+2,le),num=view.getUint32(gp+4,le),vof=gp+8;
+            if(typ===2){var sa=(num>4)?tiff+view.getUint32(vof,le):vof;if(sa+num<=len){var ss='';for(var j=0;j<num-1;j++)ss+=String.fromCharCode(view.getUint8(sa+j));gt[tag]=ss;}}
+            else if(typ===5){var ra=tiff+view.getUint32(vof,le);if(ra+num*8<=len){var rv=[];for(var j=0;j<num;j++){var dn=view.getUint32(ra+j*8+4,le);rv.push(dn?view.getUint32(ra+j*8,le)/dn:0);}gt[tag]=rv;}}
+          }
+          var la=gt[2],lr=gt[1],lna=gt[4],lnr=gt[3];
+          if(!la||!lna||la.length<3||lna.length<3)return null;
+          var lat=la[0]+la[1]/60+la[2]/3600,lng=lna[0]+lna[1]/60+lna[2]/3600;
+          if(lr==='S')lat=-lat;if(lnr==='W')lng=-lng;
+          if(lat===0&&lng===0||Math.abs(lat)>90||Math.abs(lng)>180)return null;
+          return{lat:lat.toFixed(6),lng:lng.toFixed(6),acc:null,src:'exif'};
+        }
+        off+=sl;
+      }else if((mk&0xFF00)===0xFF00&&off+2<=len){var skip=view.getUint16(off,false);if(skip<2)break;off+=skip;}
+      else break;
+    }
+  }catch(ex){}
+  return null;
+}
+
+function renderThumbs(){
+  document.getElementById('pthumbs').innerHTML=pending.map(function(d,i){
+    return '<div class="pdel"><img class="pthb" src="'+d+'" onclick="openModal(this.src)"><button class="delbtn" onclick="delPhoto('+i+')">&#x2715;</button></div>';
+  }).join('');
+}
+function delPhoto(i){pending.splice(i,1);renderThumbs();}
+
+/* === SURFACE === */
+document.getElementById('lon').addEventListener('input',calcS);
+document.getElementById('lar').addEventListener('input',calcS);
+function calcS(){var l=parseFloat(document.getElementById('lon').value),w=parseFloat(document.getElementById('lar').value);document.getElementById('scalc').textContent=(l>0&&w>0)?(l*w).toFixed(2):'--';}
+
+/* === SLUGIFY === */
+function slugify(s){
+  var am={'\xe0':'a','\xe2':'a','\xe4':'a','\xe1':'a','\xe3':'a','\xe5':'a','\xe8':'e','\xe9':'e','\xea':'e','\xeb':'e','\xee':'i','\xef':'i','\xed':'i','\xec':'i','\xf4':'o','\xf6':'o','\xf3':'o','\xf2':'o','\xf5':'o','\xf9':'u','\xfb':'u','\xfc':'u','\xfa':'u','\xff':'y','\xe7':'c','\xc0':'A','\xc2':'A','\xc4':'A','\xc1':'A','\xc3':'A','\xc5':'A','\xc8':'E','\xc9':'E','\xca':'E','\xcb':'E','\xce':'I','\xcf':'I','\xcd':'I','\xcc':'I','\xd4':'O','\xd6':'O','\xd3':'O','\xd2':'O','\xd5':'O','\xd9':'U','\xdb':'U','\xdc':'U','\xda':'U','\xc7':'C'};
+  var r='';for(var i=0;i<s.length;i++){var c=s[i];r+=am[c]||c;}
+  return r.replace(/[^a-zA-Z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').slice(0,40);
+}
+
+/* === ENREGISTRER === */
+function addReleve(){
+  var rue=document.getElementById('rue').value.trim();
+  if(!rue){toast('Saisir le nom de la rue');return;}
+  var l=parseFloat(document.getElementById('lon').value),w=parseFloat(document.getElementById('lar').value),sm=parseFloat(document.getElementById('sman').value);
+  var surf=sm>0?sm:(l>0&&w>0?+(l*w).toFixed(2):0);
+  if(surf<=0){toast('Saisir une surface');return;}
+  var rep=document.getElementById('repere').value.trim(),ts=Date.now();
+  var pNames=pending.map(function(d,i){var ext=d.indexOf('image/png')>-1?'png':'jpg';return slugify(rue)+'_'+slugify(rep||'releve')+'_'+String(i+1).padStart(2,'0')+'.'+ext;});
+  releves.push({id:ts,rue:rue,repere:rep,gravite:document.getElementById('gravite').value,longueur:l||null,largeur:w||null,surface:surf,obs:document.getElementById('obs').value.trim(),gps:gps?Object.assign({},gps):null,photos:pending.slice(),photoNames:pNames,ts:new Date(ts).toISOString()});
+  persist();updateSug();updateHdr();setRue(rue);
+  document.getElementById('repere').value='';document.getElementById('obs').value='';
+  document.getElementById('lon').value='';document.getElementById('lar').value='';document.getElementById('sman').value='';
+  document.getElementById('scalc').textContent='--';
+  pending=[];renderThumbs();
+  // reset GPS pour forcer nouvelle capture au prochain releve
+  gps=null;
+  document.getElementById('g-lat').value='';document.getElementById('g-lng').value='';document.getElementById('g-acc').value='';
+  setGPSUI('warn','En attente','Prendre une photo pour le prochain releve');
+  toast('Releve enregistre - '+surf+' m\u00B2');
+  document.querySelector('.tc').scrollTo(0,0);
+}
+
+function updateSug(){var rs=releves.map(function(r){return r.rue;}).filter(function(v,i,a){return a.indexOf(v)===i;});document.getElementById('rue-dl').innerHTML=rs.map(function(r){return '<option value="'+r+'">';}).join('');}
+function updateHdr(){var n=releves.length,s=releves.reduce(function(a,r){return a+r.surface;},0).toFixed(1);document.getElementById('hdr-sub').textContent=n+' releve'+(n>1?'s':'')+' \u00b7 '+s+' m\u00b2 total';}
+
+/* === RECAP === */
+function renderRecap(){
+  document.getElementById('s-nb').textContent=releves.length;
+  document.getElementById('s-surf').textContent=releves.reduce(function(a,r){return a+r.surface;},0).toFixed(1);
+  var map={};releves.forEach(function(r){if(!map[r.rue])map[r.rue]=[];map[r.rue].push(r);});
+  document.getElementById('s-rues').textContent=Object.keys(map).length;
+  var box=document.getElementById('recap-body');
+  if(!releves.length){box.innerHTML='<div class="empty"><i class="ti ti-road-off"></i>Aucun releve</div>';return;}
+  box.innerHTML=Object.entries(map).map(function(e){
+    var rue=e[0],items=e[1],tot=items.reduce(function(a,r){return a+r.surface;},0).toFixed(1);
+    var rows=items.map(function(r,idx){
+      var photos=(r.photos&&r.photos.length)?'<div class="rphotos">'+r.photos.map(function(p){return '<img class="rph" src="'+p+'" onclick="openModal(this.src)">';}).join('')+'</div>':'';
+      var gs=r.gps&&r.gps.src?{exif:'EXIF',auto:'GPS',watch:'GPS',manuel:'Manuel'}[r.gps.src]||r.gps.src:'';
+      var gh=r.gps?'<div class="rmeta"><i class="ti ti-map-pin" style="font-size:12px"></i>'+r.gps.lat+', '+r.gps.lng+(r.gps.acc?' \u00b1'+r.gps.acc+'m':'')+(gs?' <span class="bdg be">'+gs+'</span>':'')+'</div>':'';
+      var oh=r.obs?'<div class="robs">'+r.obs+'</div>':'';
+      var cls=r.gravite==='faible'?'bf':r.gravite==='moyen'?'bm':'bg2';
+      return '<div class="ritem"><div class="rtop"><span>'+(r.repere||'Releve '+(idx+1))+' <span class="bdg '+cls+'">'+r.gravite+'</span></span><span class="rsurf">'+r.surface+' m\u00b2</span></div>'+gh+oh+photos+'</div>';
+    }).join('');
+    return '<div class="rgrp"><div class="rhdr"><span class="rn"><i class="ti ti-road" style="color:var(--o)"></i>'+rue+'</span><span class="rto">'+tot+' m\u00b2</span></div><div class="ritems">'+rows+'</div></div>';
+  }).join('');
+}
+
+/* === CSV === */
+function buildCSV(wn){
+  var map={};releves.forEach(function(r){if(!map[r.rue])map[r.rue]=[];map[r.rue].push(r);});
+  var lines=['\uFEFF'+'Rue;Repere;Gravite;Surface m2;Longueur m;Largeur m;Latitude;Longitude;Precision GPS;Source GPS;Observations;'+(wn?'Photos':'Nb photos')+';Horodatage'];
+  Object.entries(map).forEach(function(e){
+    var rue=e[0],items=e[1];
+    items.forEach(function(r){
+      var pv=wn?(r.photoNames?r.photoNames.join(' | '):''):(r.photos?r.photos.length:0);
+      lines.push(['"'+rue.replace(/"/g,'""')+'"','"'+(r.repere||'').replace(/"/g,'""')+'"',r.gravite,r.surface,r.longueur||'',r.largeur||'',r.gps?r.gps.lat:'',r.gps?r.gps.lng:'',r.gps&&r.gps.acc?r.gps.acc+'m':'',r.gps&&r.gps.src?r.gps.src:'','"'+(r.obs||'').replace(/"/g,'""')+'"','"'+pv+'"',new Date(r.ts).toLocaleString('fr-FR')].join(';'));
+    });
+    var tot=items.reduce(function(a,r){return a+r.surface;},0).toFixed(1);
+    lines.push(['"TOTAL '+rue.replace(/"/g,'""')+'"','','',tot,'','','','','','','','',''].join(';'));
+    lines.push('');
+  });
+  return lines.join('\r\n');
+}
+
+/* === EXPORTS === */
+function exportZIP(){
+  if(!releves.length){toast('Aucun releve');return;}
+  if(typeof JSZip==='undefined'){toast('JSZip non charge');return;}
+  var btn=document.getElementById('btn-zip');btn.textContent='Generation...';btn.disabled=true;
+  var zip=new JSZip(),folder=zip.folder('photos');
+  zip.file('nids_de_poule_'+today()+'.csv',buildCSV(true));
+  releves.forEach(function(r){if(r.photos&&r.photos.length){r.photos.forEach(function(d,i){var n=(r.photoNames&&r.photoNames[i])?r.photoNames[i]:'photo_'+r.id+'_'+i+'.jpg';var b=d.split(',')[1];if(b)folder.file(n,b,{base64:true});});}});
+  zip.generateAsync({type:'blob'}).then(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nids_de_poule_'+today()+'.zip';a.click();btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';btn.disabled=false;toast('ZIP telecharge');}).catch(function(e){btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';btn.disabled=false;toast('Erreur: '+e.message);});
+}
+function exportCSV(){if(!releves.length){toast('Aucun releve');return;}dl(buildCSV(false),'nids_de_poule_'+today()+'.csv','text/csv;charset=utf-8');toast('CSV telecharge');}
+function exportKML(){
+  var wg=releves.filter(function(r){return r.gps;});
+  if(!wg.length){toast('Aucun releve avec GPS');return;}
+  var st=['faible','moyen','grave'].map(function(g){var c=g==='faible'?'ff4caf50':g==='moyen'?'ff1e88e5':'fff44336';return '<Style id="'+g+'"><IconStyle><color>'+c+'</color><scale>1.2</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>';}).join('');
+  var pm=wg.map(function(r){return '<Placemark><name>'+r.rue.replace(/&/g,'&amp;')+' - '+r.surface+' m2</name><styleUrl>#'+r.gravite+'</styleUrl><description><![CDATA[<b>Rue:</b> '+r.rue+'<br><b>Repere:</b> '+(r.repere||'-')+'<br><b>Gravite:</b> '+r.gravite+'<br><b>Surface:</b> '+r.surface+' m2<br>'+(r.longueur?'<b>Dim.:</b> '+r.longueur+'x'+r.largeur+' m<br>':'')+(r.obs?'<b>Obs:</b> '+r.obs+'<br>':'')+'<b>Source GPS:</b> '+(r.gps.src||'')+'<br><b>Date:</b> '+new Date(r.ts).toLocaleString('fr-FR')+']]></description><Point><coordinates>'+r.gps.lng+','+r.gps.lat+',0</coordinates></Point></Placemark>';}).join('');
+  dl('<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Nids de poule '+today()+'</name>'+st+pm+'</Document></kml>','nids_de_poule_'+today()+'.kml','application/vnd.google-earth.kml+xml');
+  toast('KML telecharge');
+}
+function saveJSON(){dl(JSON.stringify(releves,null,2),'ndp_'+today()+'.json','application/json');toast('Sauvegarde OK');}
+function loadJSON(inp){var f=inp.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(e){try{releves=JSON.parse(e.target.result);persist();updateHdr();updateSug();toast(releves.length+' releves charges');}catch(ex){toast('Erreur JSON');}};rd.readAsText(f);inp.value='';}
+function clearAll(){if(!confirm('Effacer tous les releves ?'))return;releves=[];rueActive=null;document.getElementById('ruebar').style.display='none';persist();updateHdr();toast('Efface');}
+function openModal(src){document.getElementById('modal-img').src=src;document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('modal-img').src='';}
+function today(){return new Date().toISOString().slice(0,10);}
+function dl(c,n,m){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:m}));a.download=n;a.click();}
+function toast(msg){var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2800);}
+
+/* === INIT === */
+updateSug();updateHdr();
+// Demarrer le watcher GPS en arriere-plan des le chargement
+startGPSWatch();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "geolocation=*, camera=*"
+    Feature-Policy = "geolocation *; camera *"
+    Cache-Control = "no-cache"
