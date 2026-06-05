@@ -354,45 +354,36 @@ function applyGPS(g,src){
   if(g.acc)document.getElementById('g-acc').value=g.acc;
 }
 
-/* === CAPTURER GPS FRAIS PUIS OUVRIR CAMERA === */
+/* === CAPTURER GPS + CAMERA EN PARALLELE ===
+   iOS Safari bloque input.click() depuis un callback async.
+   Solution : ouvrir la camera IMMEDIATEMENT (dans le geste utilisateur),
+   et lancer getCurrentPosition en parallele. Le GPS arrive
+   quelques secondes apres, avant que l'utilisateur ait fini de cadrer/valider.
+*/
 function captureGPSAndPhoto(){
+  // 1. Ouvrir la camera IMMEDIATEMENT (contexte geste utilisateur = obligatoire iOS)
+  document.getElementById('fi-cam').click();
+
+  // 2. Lancer GPS en parallele - arrivera pendant que l'utilisateur prend la photo
   if(!navigator.geolocation){
     setGPSUI('err','GPS non disponible','Saisir manuellement ci-dessous');
-    document.getElementById('fi-cam').click();
     return;
   }
-
-  setGPSUI('loading','Acquisition GPS en cours...','Patientez 2-3 secondes');
-
-  // Desactiver le bouton pendant l'acquisition
-  var btn=document.getElementById('photo-main-btn');
-  btn.style.opacity='0.6';btn.style.pointerEvents='none';
-
+  setGPSUI('loading','GPS en cours...','');
   navigator.geolocation.getCurrentPosition(
     function(p){
-      // GPS obtenu -> stocker et ouvrir la camera
       applyGPS({
         lat:p.coords.latitude.toFixed(6),
         lng:p.coords.longitude.toFixed(6),
         acc:Math.round(p.coords.accuracy),
         src:'auto'
       },'auto');
-      btn.style.opacity='';btn.style.pointerEvents='';
-      document.getElementById('fi-cam').click();
     },
     function(e){
-      // Erreur GPS -> ouvrir quand meme la camera
-      var m={1:'Permission refusee - autoriser dans Reglages > Safari > Localisation',2:'GPS indisponible',3:'Delai depasse - reessayer en exterieur'};
+      var m={1:'Autoriser dans Reglages > Safari > Localisation',2:'GPS indisponible',3:'Reessayer en exterieur'};
       setGPSUI('err','GPS non obtenu',m[e.code]||'Saisir manuellement');
-      btn.style.opacity='';btn.style.pointerEvents='';
-      // Ouvrir quand meme la camera
-      document.getElementById('fi-cam').click();
     },
-    {
-      enableHighAccuracy:true,
-      timeout:10000,
-      maximumAge:0  // FORCE une position fraiche a chaque fois, jamais de cache
-    }
+    {enableHighAccuracy:true, timeout:15000, maximumAge:0}
   );
 }
 
