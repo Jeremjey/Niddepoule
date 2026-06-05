@@ -354,52 +354,46 @@ function applyGPS(g,src){
   if(g.acc)document.getElementById('g-acc').value=g.acc;
 }
 
-/* === GPS WATCHER (continu en arriere-plan) === */
-function startGPSWatch(){
-  if(!navigator.geolocation||gpsWatcher!==null)return;
-  gpsWatcher=navigator.geolocation.watchPosition(
-    function(p){
-      // On stocke silencieusement la derniere position connue
-      window._lastKnownGPS={lat:p.coords.latitude.toFixed(6),lng:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy),src:'watch'};
-    },
-    function(){},
-    {enableHighAccuracy:true,maximumAge:5000}
-  );
-}
-
-/* === CAPTURER GPS + OUVRIR CAMERA === */
+/* === CAPTURER GPS FRAIS PUIS OUVRIR CAMERA === */
 function captureGPSAndPhoto(){
-  // 1. Capturer GPS immediatement depuis la derniere position connue ou faire une requete
-  setGPSUI('loading','Acquisition GPS...','');
-  var gotGPS=false;
-
-  // Essayer d'abord la position en cache (watchPosition)
-  if(window._lastKnownGPS){
-    var g=window._lastKnownGPS;
-    applyGPS({lat:g.lat,lng:g.lng,acc:g.acc,src:'watch'},'watch');
-    gotGPS=true;
-  }
-
-  // Lancer aussi une requete precise en parallele
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(
-      function(p){
-        applyGPS({lat:p.coords.latitude.toFixed(6),lng:p.coords.longitude.toFixed(6),acc:Math.round(p.coords.accuracy),src:'auto'},'auto');
-      },
-      function(e){
-        if(!gotGPS){
-          var m={1:'Autoriser la localisation dans les reglages',2:'GPS indisponible',3:'Saisir manuellement'};
-          setGPSUI('err','GPS non obtenu',m[e.code]||'Saisir manuellement');
-        }
-      },
-      {enableHighAccuracy:true,timeout:8000,maximumAge:10000}
-    );
-  }else if(!gotGPS){
+  if(!navigator.geolocation){
     setGPSUI('err','GPS non disponible','Saisir manuellement ci-dessous');
+    document.getElementById('fi-cam').click();
+    return;
   }
 
-  // 2. Ouvrir la camera (independamment du GPS)
-  document.getElementById('fi-cam').click();
+  setGPSUI('loading','Acquisition GPS en cours...','Patientez 2-3 secondes');
+
+  // Desactiver le bouton pendant l'acquisition
+  var btn=document.getElementById('photo-main-btn');
+  btn.style.opacity='0.6';btn.style.pointerEvents='none';
+
+  navigator.geolocation.getCurrentPosition(
+    function(p){
+      // GPS obtenu -> stocker et ouvrir la camera
+      applyGPS({
+        lat:p.coords.latitude.toFixed(6),
+        lng:p.coords.longitude.toFixed(6),
+        acc:Math.round(p.coords.accuracy),
+        src:'auto'
+      },'auto');
+      btn.style.opacity='';btn.style.pointerEvents='';
+      document.getElementById('fi-cam').click();
+    },
+    function(e){
+      // Erreur GPS -> ouvrir quand meme la camera
+      var m={1:'Permission refusee - autoriser dans Reglages > Safari > Localisation',2:'GPS indisponible',3:'Delai depasse - reessayer en exterieur'};
+      setGPSUI('err','GPS non obtenu',m[e.code]||'Saisir manuellement');
+      btn.style.opacity='';btn.style.pointerEvents='';
+      // Ouvrir quand meme la camera
+      document.getElementById('fi-cam').click();
+    },
+    {
+      enableHighAccuracy:true,
+      timeout:10000,
+      maximumAge:0  // FORCE une position fraiche a chaque fois, jamais de cache
+    }
+  );
 }
 
 function importFromGallery(){
@@ -629,8 +623,7 @@ function toast(msg){var t=document.createElement('div');t.className='toast';t.te
 
 /* === INIT === */
 updateSug();updateHdr();
-// Demarrer le watcher GPS en arriere-plan des le chargement
-startGPSWatch();
+// GPS capture a chaque prise de vue via getCurrentPosition
 </script>
 </body>
 </html>
