@@ -263,29 +263,35 @@ textarea{resize:vertical;min-height:60px}
 
   <!-- EXPORT -->
   <div id="tab-export" class="sec" style="display:none">
+    <div class="card" style="border:2px solid #F0997B;background:#FAECE7">
+      <div class="ct" style="color:#A8421E"><i class="ti ti-package" style="color:#A8421E"></i> Export complet</div>
+      <p style="font-size:13px;color:#A8421E;margin-bottom:12px">Un seul ZIP avec tout : CSV + Photos + KML + JSON</p>
+      <button id="btn-complet" onclick="exportComplet()" style="width:100%;padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:#D85A30;color:white;font-family:inherit">Tout exporter en ZIP</button>
+    </div>
+
     <div class="card">
       <div class="ct"><i class="ti ti-file-zip" style="color:var(--g)"></i> Export ZIP (CSV + photos)</div>
       <div class="ibox">
         <code>nids_de_poule.csv</code> tableau Excel avec noms fichiers photos<br>
         <code>photos/</code> images nommees <code>RUE_repere_01.jpg</code>
       </div>
-      <button class="btn bts btf" id="btn-zip" onclick="exportZIP()"><i class="ti ti-download"></i> Telecharger ZIP</button>
+      <button class="btn bts btf" id="btn-zip" onclick="exportZIPnom()"><i class="ti ti-download"></i> Telecharger ZIP</button>
     </div>
     <div class="card">
       <div class="ct"><i class="ti ti-file-spreadsheet" style="color:var(--b)"></i> Export CSV seul</div>
       <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Tableau leger, sans images.</p>
-      <button class="btn btf" style="color:var(--b);border-color:var(--b)" onclick="exportCSV()"><i class="ti ti-download"></i> Telecharger CSV</button>
+      <button class="btn btf" style="color:var(--b);border-color:var(--b)" onclick="exportCSVnom()"><i class="ti ti-download"></i> Telecharger CSV</button>
     </div>
     <div class="card">
       <div class="ct"><i class="ti ti-world" style="color:var(--b)"></i> Export KML (Google Earth)</div>
       <p style="font-size:13px;color:var(--t2);margin-bottom:10px">Points colores par gravite. Google Earth, My Maps, QGIS.</p>
-      <button class="btn btf" style="color:var(--b);border-color:var(--b)" onclick="exportKML()"><i class="ti ti-download"></i> Telecharger KML</button>
+      <button class="btn btf" style="color:var(--b);border-color:var(--b)" onclick="exportKMLnom()"><i class="ti ti-download"></i> Telecharger KML</button>
     </div>
     <div class="card">
       <div class="ct"><i class="ti ti-database" style="color:#534AB7"></i> Sauvegarde / restauration</div>
       <p style="font-size:13px;color:var(--t2)">JSON complet avec photos. Reprendre depuis n'importe quel appareil.</p>
       <div class="bgrp">
-        <button class="btn" onclick="saveJSON()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
+        <button class="btn" onclick="saveJSONnom()"><i class="ti ti-device-floppy"></i> Sauvegarder</button>
         <button class="btn" onclick="document.getElementById('li').click()"><i class="ti ti-upload"></i> Charger</button>
       </div>
       <input type="file" id="li" accept=".json" style="display:none" onchange="loadJSON(this)">
@@ -312,6 +318,52 @@ textarea{resize:vertical;min-height:60px}
 </div>
 
 <script>
+/* === INDEXEDDB - photos uniquement === */
+var _db=null;
+function dbOpen(cb){
+  if(_db){cb(_db);return;}
+  var r=indexedDB.open('ndp_photos',1);
+  r.onupgradeneeded=function(e){e.target.result.createObjectStore('photos',{keyPath:'id'});};
+  r.onsuccess=function(e){_db=e.target.result;cb(_db);};
+  r.onerror=function(){cb(null);};
+}
+function dbSave(id,photos,cb){
+  dbOpen(function(db){
+    if(!db){cb&&cb();return;}
+    var tx=db.transaction('photos','readwrite');
+    tx.objectStore('photos').put({id:String(id),photos:photos});
+    tx.oncomplete=function(){cb&&cb();};
+    tx.onerror=function(){cb&&cb();};
+  });
+}
+function dbLoad(id,cb){
+  dbOpen(function(db){
+    if(!db){cb([]);return;}
+    var tx=db.transaction('photos','readonly');
+    var req=tx.objectStore('photos').get(String(id));
+    req.onsuccess=function(e){cb(e.target.result?e.target.result.photos:[]);};
+    req.onerror=function(){cb([]);};
+  });
+}
+function dbLoadAll(ids,cb){
+  dbOpen(function(db){
+    if(!db||!ids.length){cb({});return;}
+    var res={},rem=ids.length;
+    ids.forEach(function(id){
+      var tx=db.transaction('photos','readonly');
+      var req=tx.objectStore('photos').get(String(id));
+      req.onsuccess=function(e){res[id]=e.target.result?e.target.result.photos:[];if(!--rem)cb(res);};
+      req.onerror=function(){res[id]=[];if(!--rem)cb(res);};
+    });
+  });
+}
+function dbDel(id){
+  dbOpen(function(db){
+    if(!db)return;
+    db.transaction('photos','readwrite').objectStore('photos').delete(String(id));
+  });
+}
+
 /* === STATE === */
 var releves=[],gps=null,pending=[],rueActive=null;
 var gpsWatcher=null; // watcher continu pour avoir coords fraiches
@@ -528,8 +580,13 @@ function addReleve(){
   if(surf<=0){toast('Saisir une surface');return;}
   var rep=document.getElementById('repere').value.trim(),ts=Date.now();
   var pNames=pending.map(function(d,i){var ext=d.indexOf('image/png')>-1?'png':'jpg';return slugify(rue)+'_'+slugify(rep||'releve')+'_'+String(i+1).padStart(2,'0')+'.'+ext;});
-  releves.push({id:ts,rue:rue,repere:rep,gravite:document.getElementById('gravite').value,longueur:l||null,largeur:w||null,surface:surf,obs:document.getElementById('obs').value.trim(),gps:gps?Object.assign({},gps):null,photos:pending.slice(),photoNames:pNames,ts:new Date(ts).toISOString()});
-  persist();updateSug();updateHdr();setRue(rue);
+  var _photos=pending.slice();
+  var _releve={id:ts,rue:rue,repere:rep,gravite:document.getElementById('gravite').value,longueur:l||null,largeur:w||null,surface:surf,obs:document.getElementById('obs').value.trim(),gps:gps?Object.assign({},gps):null,photoNames:pNames,nbPhotos:_photos.length,ts:new Date(ts).toISOString()};
+  // Sauvegarder photos dans IndexedDB, metadonnees dans localStorage
+  dbSave(ts,_photos,function(){
+    releves.push(_releve);
+    persist();updateSug();updateHdr();setRue(rue);
+  });
   document.getElementById('repere').value='';document.getElementById('obs').value='';
   document.getElementById('lon').value='';document.getElementById('lar').value='';document.getElementById('sman').value='';
   document.getElementById('scalc').textContent='--';
@@ -556,7 +613,7 @@ function renderRecap(){
   box.innerHTML=Object.entries(map).map(function(e){
     var rue=e[0],items=e[1],tot=items.reduce(function(a,r){return a+r.surface;},0).toFixed(1);
     var rows=items.map(function(r,idx){
-      var photos=(r.photos&&r.photos.length)?'<div class="rphotos">'+r.photos.map(function(p){return '<img class="rph" src="'+p+'" onclick="openModal(this.src)">';}).join('')+'</div>':'';
+      var photos=r.nbPhotos?'<div class="rphotos" id="rph-'+r.id+'"><span style="font-size:11px;color:var(--t3)">Chargement...</span></div>':'';
       var gs=r.gps&&r.gps.src?{exif:'EXIF',auto:'GPS',watch:'GPS',manuel:'Manuel'}[r.gps.src]||r.gps.src:'';
       var gh=r.gps?'<div class="rmeta"><i class="ti ti-map-pin" style="font-size:12px"></i>'+r.gps.lat+', '+r.gps.lng+(r.gps.acc?' \u00b1'+r.gps.acc+'m':'')+(gs?' <span class="bdg be">'+gs+'</span>':'')+'</div>':'';
       var oh=r.obs?'<div class="robs">'+r.obs+'</div>':'';
@@ -565,16 +622,30 @@ function renderRecap(){
     }).join('');
     return '<div class="rgrp"><div class="rhdr"><span class="rn"><i class="ti ti-road" style="color:var(--o)"></i>'+rue+'</span><span class="rto">'+tot+' m\u00b2</span></div><div class="ritems">'+rows+'</div></div>';
   }).join('');
+  // Charger les photos depuis IDB de facon asynchrone
+  var idsAvecPhotos=releves.filter(function(r){return r.nbPhotos;}).map(function(r){return r.id;});
+  if(idsAvecPhotos.length){
+    dbLoadAll(idsAvecPhotos,function(pm){
+      idsAvecPhotos.forEach(function(id){
+        var el=document.getElementById('rph-'+id);
+        if(!el)return;
+        var photos=pm[id]||[];
+        if(!photos.length){el.innerHTML='';return;}
+        el.innerHTML=photos.map(function(p){return '<img class="rph" src="'+p+'" onclick="openModal(this.src)">';}).join('');
+      });
+    });
+  }
 }
 
 /* === CSV === */
-function buildCSV(wn){
+function buildCSV(wn,pm){
+  pm=pm||{};
   var map={};releves.forEach(function(r){if(!map[r.rue])map[r.rue]=[];map[r.rue].push(r);});
   var lines=['\uFEFF'+'Rue;Repere;Gravite;Surface m2;Longueur m;Largeur m;Latitude;Longitude;Precision GPS;Source GPS;Observations;'+(wn?'Photos':'Nb photos')+';Horodatage'];
   Object.entries(map).forEach(function(e){
     var rue=e[0],items=e[1];
     items.forEach(function(r){
-      var pv=wn?(r.photoNames?r.photoNames.join(' | '):''):(r.photos?r.photos.length:0);
+      var pv=wn?(r.photoNames?r.photoNames.join(' | '):''):(r.nbPhotos||0);
       lines.push(['"'+rue.replace(/"/g,'""')+'"','"'+(r.repere||'').replace(/"/g,'""')+'"',r.gravite,r.surface,r.longueur||'',r.largeur||'',r.gps?r.gps.lat:'',r.gps?r.gps.lng:'',r.gps&&r.gps.acc?r.gps.acc+'m':'',r.gps&&r.gps.src?r.gps.src:'','"'+(r.obs||'').replace(/"/g,'""')+'"','"'+pv+'"',new Date(r.ts).toLocaleString('fr-FR')].join(';'));
     });
     var tot=items.reduce(function(a,r){return a+r.surface;},0).toFixed(1);
@@ -588,11 +659,15 @@ function buildCSV(wn){
 function exportZIP(){
   if(!releves.length){toast('Aucun releve');return;}
   if(typeof JSZip==='undefined'){toast('JSZip non charge');return;}
-  var btn=document.getElementById('btn-zip');btn.textContent='Generation...';btn.disabled=true;
-  var zip=new JSZip(),folder=zip.folder('photos');
-  zip.file('nids_de_poule_'+today()+'.csv',buildCSV(true));
-  releves.forEach(function(r){if(r.photos&&r.photos.length){r.photos.forEach(function(d,i){var n=(r.photoNames&&r.photoNames[i])?r.photoNames[i]:'photo_'+r.id+'_'+i+'.jpg';var b=d.split(',')[1];if(b)folder.file(n,b,{base64:true});});}});
-  zip.generateAsync({type:'blob'}).then(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nids_de_poule_'+today()+'.zip';a.click();btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';btn.disabled=false;toast('ZIP telecharge');}).catch(function(e){btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';btn.disabled=false;toast('Erreur: '+e.message);});
+  var btn=document.getElementById('btn-zip');btn.textContent='Chargement photos...';btn.disabled=true;
+  var ids=releves.filter(function(r){return r.nbPhotos;}).map(function(r){return r.id;});
+  function doZip(pm){
+    var zip=new JSZip(),folder=zip.folder('photos');
+    zip.file('nids_de_poule_'+today()+'.csv',buildCSV(true,pm));
+    releves.forEach(function(r){var photos=pm[r.id]||[];photos.forEach(function(d,i){var n=(r.photoNames&&r.photoNames[i])?r.photoNames[i]:'photo_'+r.id+'_'+i+'.jpg';var b=d.split(',')[1];if(b)folder.file(n,b,{base64:true});});});
+    zip.generateAsync({type:'blob'}).then(function(blob){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='nids_de_poule_'+today()+'.zip';a.click();btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';btn.disabled=false;toast('ZIP telecharge');}).catch(function(e){btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';btn.disabled=false;toast('Erreur: '+e.message);});
+  }
+  ids.length?dbLoadAll(ids,doZip):doZip({});
 }
 function exportCSV(){if(!releves.length){toast('Aucun releve');return;}dl(buildCSV(false),'nids_de_poule_'+today()+'.csv','text/csv;charset=utf-8');toast('CSV telecharge');}
 function exportKML(){
@@ -603,18 +678,212 @@ function exportKML(){
   dl('<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Nids de poule '+today()+'</name>'+st+pm+'</Document></kml>','nids_de_poule_'+today()+'.kml','application/vnd.google-earth.kml+xml');
   toast('KML telecharge');
 }
-function saveJSON(){dl(JSON.stringify(releves,null,2),'ndp_'+today()+'.json','application/json');toast('Sauvegarde OK');}
-function loadJSON(inp){var f=inp.files[0];if(!f)return;var rd=new FileReader();rd.onload=function(e){try{releves=JSON.parse(e.target.result);persist();updateHdr();updateSug();toast(releves.length+' releves charges');}catch(ex){toast('Erreur JSON');}};rd.readAsText(f);inp.value='';}
-function clearAll(){if(!confirm('Effacer tous les releves ?'))return;releves=[];rueActive=null;document.getElementById('ruebar').style.display='none';persist();updateHdr();toast('Efface');}
+function saveJSON(){
+  var ids=releves.filter(function(r){return r.nbPhotos;}).map(function(r){return r.id;});
+  function doSave(pm){
+    var data=releves.map(function(r){var c=Object.assign({},r);c.photos=pm[r.id]||[];return c;});
+    dl(JSON.stringify(data,null,2),'ndp_'+today()+'.json','application/json');
+    toast('Sauvegarde OK (photos incluses)');
+  }
+  ids.length?dbLoadAll(ids,doSave):doSave({});
+}
+function loadJSON(inp){
+  var f=inp.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      releves=data.map(function(r){
+        if(r.photos&&r.photos.length) dbSave(r.id,r.photos);
+        var m=Object.assign({},r);
+        m.nbPhotos=(r.photos||[]).length;
+        delete m.photos;
+        return m;
+      });
+      persist();updateHdr();updateSug();
+      toast(releves.length+' releves charges');
+    }catch(ex){toast('Erreur JSON');}
+  };
+  rd.readAsText(f);inp.value='';
+}
+function clearAll(){
+  if(!confirm('Effacer tous les releves ?'))return;
+  releves.forEach(function(r){dbDel(r.id);});
+  releves=[];rueActive=null;
+  document.getElementById('ruebar').style.display='none';
+  persist();updateHdr();toast('Efface');
+}
 function openModal(src){document.getElementById('modal-img').src=src;document.getElementById('modal').classList.add('open');}
 function closeModal(){document.getElementById('modal').classList.remove('open');document.getElementById('modal-img').src='';}
 function today(){return new Date().toISOString().slice(0,10);}
 function dl(c,n,m){var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:m}));a.download=n;a.click();}
 function toast(msg){var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},2800);}
 
+
+/* === MODALE NOM + EXPORT COMPLET === */
+var _mnCb=null, _mnMemo='';
+
+function demanderNom(titre, desc, label, cb){
+  _mnCb=cb;
+  document.getElementById('mn-titre').textContent = titre||"Nom de l'export";
+  document.getElementById('mn-desc').textContent = desc||'';
+  document.getElementById('mn-btn').textContent = label||'Exporter';
+  document.getElementById('mn-input').value = _mnMemo;
+  document.getElementById('modal-nom').style.display = 'flex';
+  setTimeout(function(){ document.getElementById('mn-input').focus(); }, 80);
+}
+function mnValider(){
+  var v = document.getElementById('mn-input').value.trim();
+  _mnMemo = v;
+  var nom = v ? slugify(v) : 'ndp_'+today();
+  document.getElementById('modal-nom').style.display = 'none';
+  if(_mnCb){ var cb=_mnCb; _mnCb=null; cb(nom); }
+}
+function mnAnnuler(){
+  document.getElementById('modal-nom').style.display = 'none';
+  _mnCb = null;
+}
+
+function buildKMLString(){
+  var wg = releves.filter(function(r){ return r.gps; });
+  if(!wg.length) return null;
+  var st = ['faible','moyen','grave'].map(function(g){
+    var c = g==='faible'?'ff4caf50':g==='moyen'?'ff1e88e5':'fff44336';
+    return '<Style id="'+g+'"><IconStyle><color>'+c+'</color><scale>1.2</scale><Icon><href>http://maps.google.com/mapfiles/kml/shapes/placemark_circle.png</href></Icon></IconStyle></Style>';
+  }).join('');
+  var pm = wg.map(function(r){
+    return '<Placemark><name>'+r.rue.replace(/&/g,'&amp;')+' - '+r.surface+' m2</name><styleUrl>#'+r.gravite+'</styleUrl><description><![CDATA[<b>Rue:</b> '+r.rue+'<br><b>Repere:</b> '+(r.repere||'-')+'<br><b>Gravite:</b> '+r.gravite+'<br><b>Surface:</b> '+r.surface+' m2<br>'+(r.obs?'<b>Obs:</b> '+r.obs+'<br>':'')+'<b>Date:</b> '+new Date(r.ts).toLocaleString('fr-FR')+']]></description><Point><coordinates>'+r.gps.lng+','+r.gps.lat+',0</coordinates></Point></Placemark>';
+  }).join('');
+  return '<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Nids de poule '+today()+'</name>'+st+pm+'</Document></kml>';
+}
+
+/* Export complet */
+function exportComplet(){
+  if(!releves.length){ toast('Aucun releve'); return; }
+  if(typeof JSZip==='undefined'){ toast('JSZip non charge'); return; }
+  demanderNom("Nom de l'export complet", "ZIP : CSV + Photos + KML + JSON", "Tout exporter", function(nom){
+    var btn = document.getElementById('btn-complet');
+    btn.textContent = 'Generation...'; btn.disabled = true;
+    // Utiliser EXACTEMENT la meme logique que exportZIP original pour charger les photos
+    var ids = releves.filter(function(r){ return r.nbPhotos; }).map(function(r){ return r.id; });
+    function doAll(pm){
+      var zip = new JSZip();
+      // CSV - meme appel que l'original
+      zip.file(nom+'.csv', buildCSV(true, pm));
+      // Photos - meme boucle que l'original
+      var folder = zip.folder('photos');
+      releves.forEach(function(r){
+        var photos = pm[r.id]||[];
+        photos.forEach(function(d,i){
+          var n = (r.photoNames&&r.photoNames[i]) ? r.photoNames[i] : 'photo_'+r.id+'_'+i+'.jpg';
+          var b = d.split(',')[1];
+          if(b) folder.file(n, b, {base64:true});
+        });
+      });
+      // KML
+      var kml = buildKMLString();
+      if(kml) zip.file(nom+'.kml', kml);
+      // JSON avec photos
+      var data = releves.map(function(r){ var c=Object.assign({},r); c.photos=pm[r.id]||[]; return c; });
+      zip.file(nom+'.json', JSON.stringify(data, null, 2));
+      zip.generateAsync({type:'blob'}).then(function(blob){
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = nom+'_complet.zip';
+        a.click();
+        btn.textContent = 'Tout exporter en ZIP';
+        btn.disabled = false;
+        toast('Export complet telecharge');
+      }).catch(function(e){
+        btn.textContent = 'Tout exporter en ZIP';
+        btn.disabled = false;
+        toast('Erreur: '+e.message);
+      });
+    }
+    // EXACTEMENT comme l'original : ids.length ? dbLoadAll : doAll({})
+    ids.length ? dbLoadAll(ids, doAll) : doAll({});
+  });
+}
+
+/* Wrappers avec nom pour les exports individuels existants */
+function exportZIPnom(){
+  if(!releves.length){ toast('Aucun releve'); return; }
+  if(typeof JSZip==='undefined'){ toast('JSZip non charge'); return; }
+  demanderNom("Nom du ZIP", "CSV + dossier photos", "Exporter ZIP", function(nom){
+    var btn = document.getElementById('btn-zip');
+    btn.textContent = 'Chargement photos...'; btn.disabled = true;
+    var ids = releves.filter(function(r){ return r.nbPhotos; }).map(function(r){ return r.id; });
+    function doZip(pm){
+      var zip = new JSZip(), folder = zip.folder('photos');
+      zip.file(nom+'.csv', buildCSV(true, pm));
+      releves.forEach(function(r){
+        var photos = pm[r.id]||[];
+        photos.forEach(function(d,i){
+          var n = (r.photoNames&&r.photoNames[i]) ? r.photoNames[i] : 'photo_'+r.id+'_'+i+'.jpg';
+          var b = d.split(',')[1];
+          if(b) folder.file(n, b, {base64:true});
+        });
+      });
+      zip.generateAsync({type:'blob'}).then(function(blob){
+        var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=nom+'_photos.zip'; a.click();
+        btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';
+        btn.disabled=false; toast('ZIP telecharge');
+      }).catch(function(e){
+        btn.innerHTML='<i class="ti ti-download"></i> Telecharger ZIP';
+        btn.disabled=false; toast('Erreur: '+e.message);
+      });
+    }
+    ids.length ? dbLoadAll(ids, doZip) : doZip({});
+  });
+}
+
+function exportCSVnom(){
+  if(!releves.length){ toast('Aucun releve'); return; }
+  demanderNom("Nom du fichier CSV", "Tableau des releves", "Exporter CSV", function(nom){
+    dl(buildCSV(false), nom+'.csv', 'text/csv;charset=utf-8');
+    toast('CSV telecharge');
+  });
+}
+
+function exportKMLnom(){
+  var kml = buildKMLString();
+  if(!kml){ toast('Aucun releve avec GPS'); return; }
+  demanderNom("Nom du fichier KML", "Google Earth / QGIS", "Exporter KML", function(nom){
+    dl(kml, nom+'.kml', 'application/vnd.google-earth.kml+xml');
+    toast('KML telecharge');
+  });
+}
+
+function saveJSONnom(){
+  demanderNom("Nom de la sauvegarde", "JSON complet avec photos", "Sauvegarder", function(nom){
+    var ids = releves.filter(function(r){ return r.nbPhotos; }).map(function(r){ return r.id; });
+    function doSave(pm){
+      var data = releves.map(function(r){ var c=Object.assign({},r); c.photos=pm[r.id]||[]; return c; });
+      dl(JSON.stringify(data,null,2), nom+'.json', 'application/json');
+      toast('Sauvegarde OK');
+    }
+    ids.length ? dbLoadAll(ids, doSave) : doSave({});
+  });
+}
+
 /* === INIT === */
 updateSug();updateHdr();
+document.getElementById('mn-input').addEventListener('keydown',function(e){if(e.key==='Enter')mnValider();});
 // GPS capture a chaque prise de vue via getCurrentPosition
 </script>
+
+<!-- MODALE NOM EXPORT -->
+<div id="modal-nom" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:800;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;padding:22px 20px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.25)">
+    <div style="font-size:16px;font-weight:700;margin-bottom:6px" id="mn-titre">Nom de l'export</div>
+    <div style="font-size:13px;color:#9C9C96;margin-bottom:14px" id="mn-desc"></div>
+    <input type="text" id="mn-input" placeholder="Ex : Villejuif_2026" style="font-size:15px;margin-bottom:16px;width:100%;padding:10px 12px;border:1px solid #E2E2DE;border-radius:8px;background:#F7F7F5;font-family:inherit;outline:none;box-sizing:border-box">
+    <div style="display:flex;gap:10px">
+      <button onclick="mnAnnuler()" style="flex:1;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:1px solid #E2E2DE;background:#F7F7F5;font-family:inherit">Annuler</button>
+      <button id="mn-btn" onclick="mnValider()" style="flex:2;padding:10px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;background:#D85A30;color:white;font-family:inherit">Exporter</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
