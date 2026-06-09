@@ -693,15 +693,32 @@ function loadJSON(inp){
   rd.onload=function(e){
     try{
       var data=JSON.parse(e.target.result);
-      releves=data.map(function(r){
-        if(r.photos&&r.photos.length) dbSave(r.id,r.photos);
+      // Construire les metadonnees sans photos
+      var metadonnees=data.map(function(r){
         var m=Object.assign({},r);
         m.nbPhotos=(r.photos||[]).length;
         delete m.photos;
         return m;
       });
-      persist();updateHdr();updateSug();
-      toast(releves.length+' releves charges');
+      // Sauvegarder toutes les photos dans IndexedDB en attendant la fin
+      var avecPhotos=data.filter(function(r){return r.photos&&r.photos.length;});
+      var restant=avecPhotos.length;
+      function apresPhotos(){
+        // Toutes les photos sont dans IndexedDB -> on peut valider
+        releves=metadonnees;
+        persist();updateHdr();updateSug();
+        toast(releves.length+' releves charges');
+      }
+      if(!restant){
+        apresPhotos();
+      }else{
+        avecPhotos.forEach(function(r){
+          dbSave(r.id,r.photos,function(){
+            restant--;
+            if(restant===0) apresPhotos();
+          });
+        });
+      }
     }catch(ex){toast('Erreur JSON');}
   };
   rd.readAsText(f);inp.value='';
