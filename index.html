@@ -346,8 +346,18 @@ function dbLoadAll(ids,cb){
     ids.forEach(function(id){
       var tx=db.transaction('photos','readonly');
       var req=tx.objectStore('photos').get(String(id));
-      req.onsuccess=function(e){res[id]=e.target.result?e.target.result.photos:[];if(!--rem)cb(res);};
-      req.onerror=function(){res[id]=[];if(!--rem)cb(res);};
+      req.onsuccess=function(e){
+        var photos=e.target.result?e.target.result.photos:[];
+        // Stocker avec les deux formes de cle (number et string) pour eviter les problemes de type
+        res[id]=photos;
+        res[String(id)]=photos;
+        if(!--rem)cb(res);
+      };
+      req.onerror=function(){
+        res[id]=[];
+        res[String(id)]=[];
+        if(!--rem)cb(res);
+      };
     });
   });
 }
@@ -687,11 +697,15 @@ function loadJSON(inp){
   rd.onload=function(e){
     try{
       var data=JSON.parse(e.target.result);
-      var meta=data.map(function(r){var m=Object.assign({},r);m.nbPhotos=(r.photos||[]).length;delete m.photos;return m;});
-      var avec=data.filter(function(r){return r.photos&&r.photos.length;});
-      var reste=avec.length;
-      function fin(){releves=meta;persist();updateHdr();updateSug();toast(releves.length+' releves charges');}
-      if(!reste){fin();}else{avec.forEach(function(r){dbSave(r.id,r.photos,function(){if(--reste===0)fin();});});}
+      releves=data.map(function(r){
+        if(r.photos&&r.photos.length) dbSave(r.id,r.photos);
+        var m=Object.assign({},r);
+        m.nbPhotos=(r.photos||[]).length;
+        delete m.photos;
+        return m;
+      });
+      persist();updateHdr();updateSug();
+      toast(releves.length+' releves charges');
     }catch(ex){toast('Erreur JSON');}
   };
   rd.readAsText(f);inp.value='';
